@@ -265,10 +265,10 @@ echo "Launching apache"
 exec /app/apache/bin/httpd -DNO_DETACH
 EOF
 
-chmod +x boot.sh
+# chmod +x boot.sh
 
-# clean the cache
-rm -rf $CACHE_DIR
+# # clean the cache
+# rm -rf $CACHE_DIR
 
 
 status "New Installing dependencies..."
