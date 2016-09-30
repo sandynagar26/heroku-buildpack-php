@@ -192,86 +192,15 @@ composer() {
 }
 export -f composer
 
-MCRYPT_VERSION="2.5.8"
-APACHE_VERSION="2.2.27"
-APACHE_PATH="apache"
-PHP_VERSION="5.3.29"
-PHP_PATH="php"
+ echo "install php5.6-sybase"; 
 
-BIN_DIR=$(dirname $0)
-BUILD_DIR=$1
-CACHE_DIR=$2
-LP_DIR=`cd $(dirname $0); cd ..; pwd`
+apt-get install php5.6-sybase
 
-# include .files when moving things around
-shopt -s dotglob
+ echo "Update for PEAR";
 
-cd $BUILD_DIR
+pear install --nodeps MDB2_Driver_mssql
 
-# move app things to www
-mkdir -p $CACHE_DIR/www
-mv * $CACHE_DIR/www
-mv $CACHE_DIR/www .
-
-# keep Procfile
-if [ -f www/Procfile ]; then
-  mv www/Procfile .
-fi
-
-#MCRYPT_URL="https://heroku-buildpack-php.s3.amazonaws.com/mcrypt-""$MCRYPT_VERSION""$heroku_rev"".tar.gz"
-MCRYPT_URL="https://s3.amazonaws.com/heroku-erickthered/mcrypt-2.5.8.tar.bz2"
-echo "-----> Bundling mcrypt version $MCRYPT_VERSION"
-curl --silent --max-time 60 --location "$MCRYPT_URL" | tar xj
-
-#APACHE_URL="https://heroku-buildpack-php.s3.amazonaws.com/apache-""$APACHE_VERSION""$heroku_rev"".tar.gz"
-APACHE_URL="https://s3.amazonaws.com/heroku-erickthered/apache-2.2.27.tar.bz2"
-echo "-----> Bundling Apache version $APACHE_VERSION"
-curl --silent --max-time 60 --location "$APACHE_URL" | tar xj
-
-echo "-----> Bundling FreeTDS version 0.9.1"
-curl --silent --max-time 60 --location "https://s3.amazonaws.com/heroku-erickthered/freetds-0.9.1.tar.bz2" | tar xj
-
-echo "-----> Bundling libJPEG version 8-d"
-curl --silent --max-time 60 --location "https://s3.amazonaws.com/heroku-erickthered/jpeg-8d.tar.bz2" | tar xj
-
-echo "-----> Bundling PHP version $PHP_VERSION with apc.so mongo.so, redis.so and pdo_dblib built-in support"
-curl --silent --max-time 60 --location "https://s3.amazonaws.com/heroku-erickthered/php-""$PHP_VERSION"".tar.bz2" | tar xj
-
-# update config files
-mkdir -p /app/apache/conf
-cp $LP_DIR/conf/httpd.conf $APACHE_PATH/conf
-cp $LP_DIR/conf/php.ini php
-cp $LP_DIR/conf/freetds.conf freetds/etc
-
-# make php available on bin
-mkdir -p bin
-ln -s /app/php/bin/php bin/php
-
-cat >>boot.sh <<EOF
-for var in \`env|cut -f1 -d=\`; do
-  echo "PassEnv \$var" >> /app/apache/conf/httpd.conf;
-done
-echo "Include /app/www/httpdconf/*.conf" >> /app/apache/conf/httpd.conf
-touch /app/apache/logs/error_log
-touch /app/apache/logs/access_log
-tail -F /app/apache/logs/error_log &
-tail -F /app/apache/logs/access_log &
-export LD_LIBRARY_PATH=/app/php/lib/php
-export PHP_INI_SCAN_DIR=/app/www
-mkdir -p /app/www/application/var/cache/db
-mkdir -p /app/www/application/var/cache/front
-chmod 777 /app/www/application/var/cache/*
-echo "Launching apache"
-exec /app/apache/bin/httpd -DNO_DETACH
-EOF
-
-# chmod +x boot.sh
-
-# # clean the cache
-# rm -rf $CACHE_DIR
-
-
-status "New Installing dependencies..."
+status "NewInstalling dependencies..."
 
 # check if we should use a composer.phar version bundled with the project
 if [[ -f "composer.phar" ]]; then
